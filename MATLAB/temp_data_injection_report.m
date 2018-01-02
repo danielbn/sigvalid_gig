@@ -1,24 +1,22 @@
 % ccc; clear results
 %%% Fs = 20833+1/3;
 %% Main test parameters. And gen test signal
-tc_num = 1  % 1 or 4  0g injection
-EP = 11 %1:10
+tc_num = 1111 %:4
+EP = 1 %[13]%1:10
 
 
-rec_time = 3.9076 ; % 3.9076 for 1074 , 4.0060 for 1075
+rec_time = 4;%3.9076 ; % 3.9076 for 1074 , 4.0060 for 1075
 sig_time = 4;%3 ; % rec_time ;  %time length of transmited signal in seconds
 Fs = 20833;
 amp_accuracy = 0.02; % sigg to rec   2%
-noise_level = 0.001;
-noise_floor = noise_level * 7.5; % noise ? g = 2e-5
+noise_level = 1e-4; % noise 0.1mg
+noise_floor = noise_level * 10;  
 hann_win = 1 ; % hann window on = 1 ,  off = 0
 h_filter = 5 ; % highpass cutoff frequency in Hz 
 
 FeatherHz = 10 ; % the space from peaks to make the noise window 
 
-
-folder_root = 'signal_injection_1074/';
-
+% folder_root = 'C:\Users\Daniel\Documents\Raw_data\signal_injection_1074\';
 
 for EP_ID =EP
     for test_ID = tc_num
@@ -47,12 +45,7 @@ for EP_ID =EP
             test_name = 'EP_testID';
         end
         
-%         list = ls([ folder_root folder_test '/vib*']);
-         list = dir([ folder_root folder_test '/vib*']);
-        
-        list={list.name};
-        
-        
+        list = ls([ folder_root folder_test '\vib*']);
         if isempty ( list)
             continue
         end
@@ -69,18 +62,18 @@ for EP_ID =EP
                 offset=0;
                 amplitude = ones(1,numel(f_source));
                 amplitude=amplitude * 40e-3; % 40mv = 1/4g
-            case 3 % Wave packet
-                fprim = primes(8200); % make only prime frequency this way none of them are a multiple of any other.
-                f_source = fprim([1:7:floor(end/3)-1 , ceil(end/3):20:end ]); % 7 boom!! :-)
-                offset=0;
-                amplitude = ones(1,numel(f_source));
-                amplitude=amplitude * 1e-3; % 4mv = 1/10g
+%             case 3 % Wave packet
+%                 fprim = primes(8200); % make only prime frequency this way none of them are a multiple of any other.
+%                 f_source = fprim([1:7:floor(end/3)-1 , ceil(end/3):20:end ]); % 7 boom!! :-)
+%                 offset=0;
+%                 amplitude = ones(1,numel(f_source));
+%                 amplitude=amplitude * 1e-3; % 4mv = 1/10g
             case 4 % Wave packet
                 f_source = 0;
                 offset=0;
                 amplitude = ones(1,numel(f_source));
                 amplitude=amplitude * 0; % 4mv = 1/10g
-            case 5 % Wave packet
+            case 3 % Wave packet
                 fprim = primes(8200); % make only prime frequency this way none of them are a multiple of any other.
                 f_source = fprim(10:100:end); % 7 boom!! :-)
                 offset=0;
@@ -116,29 +109,29 @@ for EP_ID =EP
             sigg = hipass_filter(sigg , Fss,h_filter) ;
         end
         % subplot (2,1,1) ; plot (t_source,(outputdata-2.5)/0.04) ; hold all
-        [sigg_fft , ff ,~] =  myfft(sigg,Fss,hann_win);
+        [sigg_fft_perF , ff ,~] =  myfft(sigg,Fss,hann_win);
         
-%         % % <<<<<<<<<<<<<<<< add filter to source sig >>>>>>>>>>>>>>>>> %
-%         [num,~,~] = xlsread('C:\Users\Daniel\Dropbox (Augury)\RandD\MyMatlabfun\Filters_6K_10K.xlsx');
-%         end_ind = find (ff> num(end,1),1,'first') ;% remove high frequencies to save MEMORY
-%         Efilter = interp1([0 ; num(:,1)],[1; num(:,2)],ff(1:end_ind-1),'linear'); % add at f = 0 amp = 1;
-%         Efilter(isnan(Efilter)) = 0; % remove NaN;
-%         sigg_fft = Efilter'.*sigg_fft_perF(1:end_ind-1); 
-%         ff = ff(1:end_ind-1);
-%         % % <<<<<<<<<<<< end of noise >>>>>>>>>>>>>>> %
+        % % <<<<<<<<<<<<<<<< add filter to source sig >>>>>>>>>>>>>>>>> %
+        [num,~,~] = xlsread('C:\Users\Daniel\Dropbox (Augury)\RandD\MyMatlabfun\Filters_6K_10K.xlsx');
+        end_ind = find (ff> num(end,1),1,'first') ;% remove high frequencies to save MEMORY
+        Efilter = interp1([0 ; num(:,1)],[1; num(:,2)],ff(1:end_ind-1),'linear'); % add at f = 0 amp = 1;
+        Efilter(isnan(Efilter)) = 0; % remove NaN;
+        sigg_fft = Efilter'.*sigg_fft_perF(1:end_ind-1); 
+        ff = ff(1:end_ind-1);
+        % % <<<<<<<<<<<< end of noise >>>>>>>>>>>>>>> %
         
         % subplot (2,1,2) ; plot (ff,sigg_fft) ; hold all
         f1 = figure;
         subplot (2,1,2) ; plot (ff,sigg_fft) ; hold all
         for ind =1:3
-            data{ind} = pars_raw_data([folder_root folder_test '/' list{ind}],h_filter);
+            data{ind} = pars_raw_data([folder_root folder_test '\' strtrim(list(ind,:))],h_filter);
             N(ind) = numel(data{ind});
             %%%%%%%% pad zeros to data %%%%%%%%
-            if  round(N(ind)/Fs,4) < sig_time
-                data{ind} = [ data{ind} ; zeros(sig_time*Fs -N(ind) -1,1) ]; % add zeros
-            else
-                data{ind} = data{ind}(1:sig_time*Fs); %remove data
-            end
+%             if  round(N(ind)/Fs,4) < sig_time
+%                 data{ind} = [ data{ind} ; zeros(sig_time*Fs -N(ind) -1,1) ]; % add zeros
+%             else
+%                 data{ind} = data{ind}(1:sig_time*Fs); %remove data
+%             end
             Npad = numel(data{ind});
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                      
@@ -159,7 +152,7 @@ for EP_ID =EP
         end
         
         % plot and save it.
-        subplot (2,1,1) ; title(strrep(folder_test,'_',' ')) ; legend('vib0','vib1','vib2'); xlim([1 1.3])
+        subplot (2,1,1) ; title(strrep(folder_test,'_',' ')) ; legend('vib0','vib1','vib2'); %xlim([1 1.3])
         subplot (2,1,2) ;  legend('source','vib0','vib1','vib2'); xlim([0 10e3])
         
         linkaxes([axt{1} ,axt{2} ,axt{3} ],'xy')
@@ -189,7 +182,8 @@ for EP_ID =EP
             [data_acc_fft , f] = myfft(data_acc,Fs,hann_win);
             
             % <test case 1: data length, make sure that no sample points were lost >
-            if abs(rec_time*Fs - N(ind))/(rec_time*Fs) < 0.0001 % rec_time == round(N(ind)/Fs,4)  % rounds to 100 microseconds
+%             if abs(rec_time*Fs - N(ind))/(rec_time*Fs) < 0.0001 % diff is less then 0.01%  % rec_time == round(N(ind)/Fs,4)  % rounds to 100 microseconds
+            if abs(rec_time*Fs - N(ind)) < 256/2 % the diff is less then the pading that can be applyed 
                 results.(test_name).(['vib' num2str(ind)]).test_case_1_data_length =  'Pass'; % pass
             else
                 results.(test_name).(['vib' num2str(ind)]).test_case_1_data_length =  'Fail'; % fail
@@ -233,42 +227,24 @@ for EP_ID =EP
                 end
                 
                 % check for noise level
-                if numel(locs) == 0
-                    n=(round(6/f_res):length(data_acc_fft))
-                    winA=data_acc_fft(n)
-                   results.(test_name).(['vib' num2str(ind)]).noise_mean_stdev_min_max =  ...
-                        [ mean([winA]) , std([winA]) , min([winA]) , max([winA])];
-                elseif  numel(locs) == 1
+                if  numel(locs) == 1
                     n  = round(FeatherHz/f_res); %n index of FeatherHz
                     try % make sure the right window doesn't exceed the length of the vector
-                        %   winR = data_acc_fft( locs+n:locs+n+round(N*0.005));
-                        winR = data_acc_fft( locs+n:locs+round(numel(data_acc_fft(locs+n:end))*0.90));
-%                         winR = data_acc_fft( locs+n:end);
-
+                        winR = data_acc_fft( locs+n:locs+n+round(N*0.005));
                     catch
-                        winR = []
+                        winR = data_acc_fft(locs+n:end);
                     end
                     try % make sure the left window shorter than the vector
                         winL = data_acc_fft( locs-n-round(N*0.005):locs-n);
                     catch
                         winL = data_acc_fft(round(6/f_res):locs-n);
                     end
-                    
-                     if length(   winL)==0 |    length(   winR)==0
-                            error('Window length is 0');
-                        end
                     results.(test_name).(['vib' num2str(ind)]).noise_mean_stdev_min_max =  ...
                         [ mean([winL; winR]) , std([winL; winR]) , min([winL; winR]) , max([winL; winR])];
                 else % check the average noise in between the peaks
                     for ind_peak =1:numel(locs)-1
                         n = locs(ind_peak+1)- locs(ind_peak);%n index between peaks
-                        takeidx=locs(ind_peak) + round(n*0.1): locs(ind_peak+1) - round(n*0.1)
-                        minlegitidx=round(6/f_res)
-                        takeidx_legit=find( takeidx>minlegitidx)
-                        if takeidx_legit | length(takeidx)==0
-                            error('No valid window length');
-                        end
-                        win = data_acc_fft(  takeidx); 
+                        win = data_acc_fft( locs(ind_peak) + round(n*0.1): locs(ind_peak+1) - round(n*0.1) ); 
                         results.(test_name).(['vib' num2str(ind)]).noise_mean_stdev_min_max =  ...
                             [ mean(win) , std(win) , min(win) , max(win)];
                     end
